@@ -138,7 +138,7 @@ class AES:
             while f_in.readinto(self._filebuf_mv):
                 self._decryptor.decrypt(self._filebuf_mv, self._filebuf_mv)
                 n = PKCS7.verify(self._filebuf_mv, block_size)
-                _ = f_out.write(uctypes.bytes_at(addr, n))
+                _ = f_out.write(uctypes.bytearray_at(addr, n))
 
 def new(key, mode, IV=None):
     return AES(key, mode, IV)
