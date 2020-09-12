@@ -85,6 +85,7 @@ bytearray(b'This is an example string.')
 >>> aes.decrypt_file('out.enc', 'challenger.txt')   # mpyaes.AES.decrypt_file(input_file, output_file)
 >>> with open('to_encrypt.txt', 'rb') as f, open('challenger.txt', 'rb') as g:
 ...     assert f.read() == g.read()
+...
 >>>
 ```
 
