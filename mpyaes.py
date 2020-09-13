@@ -133,12 +133,11 @@ class AES:
         block_size = self.block_size
         if uos.stat(f_in_name)[6] % block_size:
             raise ValueError('file size is not a multiple of block size')
-        addr = uctypes.addressof(self._filebuf_mv)
         with open(f_in_name, 'rb') as f_in, open(f_out_name, 'wb') as f_out:
             while f_in.readinto(self._filebuf_mv):
                 self._decryptor.decrypt(self._filebuf_mv, self._filebuf_mv)
                 n = PKCS7.verify(self._filebuf_mv, block_size)
-                _ = f_out.write(uctypes.bytearray_at(addr, n))
+                _ = f_out.write(self._filebuf_mv[:n])
 
 def new(key, mode, IV=None):
     return AES(key, mode, IV)
