@@ -119,25 +119,36 @@ class AES:
         return uctypes.bytearray_at(uctypes.addressof(ciphertext), n)
 
     def encrypt_file(self, f_in_name: str, f_out_name: str):
+        block_size = self.block_size
+        block_reads = uos.stat(f_in_name)[6] // block_size
         with open(f_in_name, 'rb') as f_in, open(f_out_name, 'wb') as f_out:
-            n = f_in.readinto(self._filebuf_mv[:-1])
-            while n:
-                n = self.block_size - n
-                for i in range(n):
-                    self._filebuf[-1-i] = n
+            for _ in range(block_reads):
+                f_in.readinto(self._filebuf_mv)
                 self._encryptor.encrypt(self._filebuf_mv, self._filebuf_mv)
-                _ = f_out.write(self._filebuf_mv)
-                n = f_in.readinto(self._filebuf_mv[:-1])
+                f_out.write(self._filebuf_mv)
+            # Handling the padded block now
+            padding = block_size - f_in.readinto(self._filebuf_mv)
+            for i in range(padding):
+                self._filebuf_mv[-1-i] = padding
+            self._encryptor.encrypt(self._filebuf_mv, self._filebuf_mv)
+            f_out.write(self._filebuf_mv)
     
     def decrypt_file(self, f_in_name: str, f_out_name: str):
         block_size = self.block_size
-        if uos.stat(f_in_name)[6] % block_size:
+        block_reads, not_a_multiple = divmod(uos.stat(f_in_name)[6], block_size)
+        if not_a_multiple:
             raise ValueError('file size is not a multiple of block size')
+        block_reads -= 1
         with open(f_in_name, 'rb') as f_in, open(f_out_name, 'wb') as f_out:
-            while f_in.readinto(self._filebuf_mv):
+            for _ in range(block_reads):
+                f_in.readinto(self._filebuf_mv)
                 self._decryptor.decrypt(self._filebuf_mv, self._filebuf_mv)
-                n = PKCS7.verify(self._filebuf_mv, block_size)
-                _ = f_out.write(self._filebuf_mv[:n])
+                f_out.write(self._filebuf_mv)
+            # Handling the padded block now
+            f_in.readinto(self._filebuf_mv)
+            self._decryptor.decrypt(self._filebuf_mv, self._filebuf_mv)
+            n = PKCS7.verify(self._filebuf_mv, block_size)
+            f_out.write(self._filebuf_mv[:n])
 
 def new(key, mode, IV=None):
     return AES(key, mode, IV)
