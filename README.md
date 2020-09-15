@@ -94,4 +94,3 @@ bytearray(b'This is an example string.')
 - `mpyaes` makes use of generic MicroPython libraries to increase portability.
 - AES 128-bit and 256-bit, ECB and CBC modes were tested on an ESP32 running MicroPython 1.13.
 - CTR mode isn't supported on the ESP32, so I haven't tested it.
-- File encryption and decryption are done ≈ _block\_size_-byte reads/writes at a time.
